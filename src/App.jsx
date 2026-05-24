@@ -1,0 +1,927 @@
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { supabase } from "./supabaseClient";
+import {
+  Lock, Check, Swords, Flame, Coins, Users, Star,
+  ChevronDown, ChevronUp, Hammer, Target, BookOpen, PiggyBank,
+  PenLine, Trophy, MapPin, Briefcase, Crown, Building2, RotateCcw, LogOut, Cloud
+} from "lucide-react";
+
+/* ============================ GAME DATA ============================ */
+
+const CHAPTERS = [
+  { id: 1, name: "The Freelancer", tagline: "Prove you can work for yourself." },
+  { id: 2, name: "The Agency Builder", tagline: "You can't scale yourself. Build a team." },
+  { id: 3, name: "The Company Owner", tagline: "Build something that outlasts you." },
+  { id: 4, name: "The Builder", tagline: "This was always what it was for." },
+];
+
+const LEVELS = [
+  /* ---------------- CHAPTER 1 — THE FREELANCER ---------------- */
+  {
+    id: 1, chapter: 1, title: "The Apprentice", subtitle: "Make your work visible", est: "1–2 weeks",
+    quests: [
+      { id: "1a", name: "Forge Your GitHub", xp: 80, rep: 2, time: "30 min",
+        what: "Create a clean GitHub profile and push ONE real project — even a refactored Apex sample with a proper README.",
+        why: "Clients can't trust code they can't see. This is your first piece of public proof.",
+        min: "Just create the profile and one empty repo with a README title. Still counts.",
+        skip: "You stay invisible. Nobody hires a black box.",
+        input: true, placeholder: "Paste your GitHub profile URL" },
+      { id: "1b", name: "Document the SLA Project", xp: 100, rep: 3, time: "20 min",
+        what: "Write 5 sentences about your SLA / Service Cloud implementation: the problem, what you built, the result.",
+        why: "This becomes your strongest case study. You already did the work — make it count.",
+        min: "Write ONE sentence about the problem it solved.",
+        skip: "Your best work stays a secret.",
+        input: true, placeholder: "Write your SLA case study here..." },
+      { id: "1c", name: "Document the Maps Integration", xp: 90, rep: 2, time: "20 min",
+        what: "Write a short case study on your Google Maps integration — what it connected, why it mattered.",
+        why: "Integration work is premium. Clients pay more for it. Show it off.",
+        min: "List the two systems you connected.",
+        skip: "You undersell your highest-value skill.",
+        input: true, placeholder: "Write your Maps integration case study..." },
+      { id: "1d", name: "Write Your Specialist Headline", xp: 60, rep: 1, time: "10 min",
+        what: "Write a one-line positioning headline. e.g. 'Salesforce Service Cloud & Integration Developer'.",
+        why: "Generalists get ignored. Specialists get hired. Pick your lane.",
+        min: "Write any version of it. Refine later.",
+        skip: "You blend into 10,000 other 'Salesforce developers'.",
+        input: true, placeholder: "Your one-line headline..." },
+    ],
+    boss: { name: "Portfolio Live", desc: "A public page (GitHub README, Notion, or simple site) exists with your 2 case studies and headline visible.",
+      input: true, placeholder: "Paste the link to your live portfolio" },
+  },
+  {
+    id: 2, chapter: 1, title: "The Craftsman", subtitle: "Become discoverable", est: "1 week",
+    quests: [
+      { id: "2a", name: "Create Upwork Profile", xp: 90, rep: 2, time: "45 min",
+        what: "Build your Upwork profile with your headline, overview, and Service Cloud skills tagged.",
+        why: "This is where the cold-but-real demand lives. Get the line in the water.",
+        min: "Create the account and save a draft overview.",
+        skip: "You wait for clients who'll never find you.",
+        input: true, placeholder: "Paste your Upwork profile URL" },
+      { id: "2b", name: "Optimize LinkedIn", xp: 80, rep: 2, time: "30 min",
+        what: "Update your LinkedIn headline + About section to your specialist positioning. Add your case studies.",
+        why: "Partners and recruiters search LinkedIn for exactly your stack.",
+        min: "Update just the headline.",
+        skip: "Warm opportunities pass you by silently.",
+        input: true, placeholder: "Paste your LinkedIn URL" },
+      { id: "2c", name: "Add a Professional Photo", xp: 50, rep: 1, time: "15 min",
+        what: "Add a clean, professional headshot to both profiles.",
+        why: "Faceless profiles get 3–5x fewer responses. Trust starts with a face.",
+        min: "Add it to one profile.",
+        skip: "You look like a bot. Clients scroll past.",
+        input: false },
+    ],
+    boss: { name: "Profiles Published", desc: "Both Upwork and LinkedIn are live, public, with photo + headline + a case study visible.",
+      input: true, placeholder: "Paste both links to defeat the boss", rep: 4 },
+  },
+  {
+    id: 3, chapter: 1, title: "The Specialist", subtitle: "Build credibility (side track — don't hide here)", est: "2 weeks (timeboxed)",
+    quests: [
+      { id: "3a", name: "Publish 1 Real Post", xp: 90, rep: 4, time: "30 min",
+        what: "Write 1 LinkedIn post about a real Salesforce problem you solved (e.g. the SLA logic, the Maps integration).",
+        why: "One good technical post does more than a cert. It proves you can think AND communicate.",
+        min: "Write 3 sentences and post them.",
+        skip: "You're a great dev nobody's heard of.",
+        input: true, placeholder: "Paste the link to your post" },
+      { id: "3b", name: "Request a Recommendation", xp: 70, rep: 3, time: "10 min",
+        what: "Ask a CloudStaff colleague or manager for a short written recommendation of your work.",
+        why: "Social proof you didn't write yourself is gold for cold clients.",
+        min: "Send the request message. Receiving it isn't required to complete.",
+        skip: "You start every pitch with zero vouching.",
+        input: false },
+      { id: "3c", name: "Start PD1 (Side Track)", xp: 60, rep: 2, time: "ongoing",
+        what: "Begin Platform Developer I prep — but this is OPTIONAL fuel, not a gate. Just start a module.",
+        why: "Opens the subcontracting door with partners. But it must NOT block your outreach.",
+        min: "Complete one Trailhead module. That's it.",
+        skip: "Slightly fewer partner doors — but you can still win without it.",
+        input: false },
+    ],
+    boss: { name: "Credibility Online", desc: "1 public post + recommendation requested. PD1 started OR consciously skipped. Either way — you move on.",
+      input: false, rep: 3 },
+  },
+  {
+    id: 4, chapter: 1, title: "The Hunter", subtitle: "Outreach — the engine of everything", est: "ongoing — daily",
+    quests: [
+      { id: "4a", name: "Tap 5 Warm Contacts", xp: 120, rep: 5, time: "30 min",
+        what: "Message 5 people who already know your work — ex-colleagues, CloudStaff network, old contacts. Ask if they know anyone needing Salesforce help.",
+        why: "Your FASTEST client is warm, not cold. This is the highest-leverage quest in the whole game.",
+        min: "Message just 1 person today.",
+        skip: "You take the slowest possible road to your first client.",
+        input: true, placeholder: "List who you reached out to" },
+      { id: "4b", name: "Send 20 Proposals", xp: 150, rep: 5, time: "across the level",
+        what: "Send 20 tailored Upwork proposals (use the Daily Outreach quest to chip away — 1/day).",
+        why: "Cold outreach is a numbers game. 20 proposals ≈ your first real conversations.",
+        min: "Track them with the daily quest. They add up.",
+        skip: "5 proposals and silence is why most quit. Don't be most people.",
+        input: false },
+      { id: "4c", name: "Message 10 SF Partners", xp: 110, rep: 4, time: "across the level",
+        what: "DM 10 Salesforce consulting partners on LinkedIn offering subcontract dev capacity.",
+        why: "Partners have overflow work and need certified/skilled hands. This bypasses the review wall entirely.",
+        min: "Send 1 partner message.",
+        skip: "You ignore the door that opens fastest for skilled devs.",
+        input: false },
+      { id: "4d", name: "Post in Trailblazer Community", xp: 70, rep: 3, time: "15 min",
+        what: "Post your availability + specialty in the Salesforce Trailblazer Community.",
+        why: "Devs literally post needs there. Free, warm, targeted.",
+        min: "Make one post.",
+        skip: "You skip a free pool of buyers who speak your language.",
+        input: false },
+    ],
+    boss: { name: "First Conversation", desc: "A real client or partner has replied and you're in an actual conversation about work.",
+      input: true, placeholder: "Describe the conversation that started", rep: 6 },
+  },
+  {
+    id: 5, chapter: 1, title: "The Closer", subtitle: "Turn talk into money", est: "1–4 weeks",
+    quests: [
+      { id: "5a", name: "Build Your Call Script", xp: 100, rep: 3, time: "30 min",
+        what: "Pre-write what you'll say on a discovery call: intro, 3 questions to ask, how you describe your value. Built for your verbal-under-pressure weakness.",
+        why: "You don't improvise well live — so don't. A script removes the panic and helps you close.",
+        min: "Write your 2-sentence intro.",
+        skip: "You freeze on the call and lose a client you'd earned.",
+        input: true, placeholder: "Write your call-opening script" },
+      { id: "5b", name: "Do Your First Call", xp: 130, rep: 5, time: "30 min",
+        what: "Get on a real discovery call with a prospect. Use the script. Listen more than you explain.",
+        why: "Most of closing is just showing up calm and clear. The script makes you both.",
+        min: "Even a chat-based discovery counts if a call isn't possible.",
+        skip: "You stall at the finish line.",
+        input: false },
+      { id: "5c", name: "Send a Scoped Proposal", xp: 110, rep: 4, time: "30 min",
+        what: "Send a clear proposal: scope, timeline, price. Don't over-explain. State it confidently.",
+        why: "Vague proposals get ghosted. A clear scope + price gets a yes or a counter — both are progress.",
+        min: "Send a one-paragraph quote.",
+        skip: "Indecision reads as inexperience.",
+        input: false },
+    ],
+    boss: { name: "First Payment", desc: "Money has hit your account from a freelance client. You are officially no longer 'just an employee'.",
+      input: true, placeholder: "How much was your first freelance payment? (PHP)", clients: 1, rep: 8 },
+  },
+  {
+    id: 6, chapter: 1, title: "The Retainer", subtitle: "Make it last", est: "1–2 months",
+    quests: [
+      { id: "6a", name: "Deliver Clean Work", xp: 120, rep: 4, time: "—",
+        what: "Ship the project to your own standards: 90%+ coverage, separation of concerns, no shortcuts.",
+        why: "Your reputation is built on the first delivery. Make them want more.",
+        min: "Ship something working and tested.",
+        skip: "A sloppy first job kills the retainer before it starts.",
+        input: false },
+      { id: "6b", name: "Ask for a 5-Star Review", xp: 90, rep: 5, time: "10 min",
+        what: "Request a review. The first one breaks the cold-start curse forever.",
+        why: "Reviews compound. Your second client comes 3x easier than your first.",
+        min: "Send the request.",
+        skip: "You restart from zero credibility every time.",
+        input: false },
+      { id: "6c", name: "Propose Ongoing Work", xp: 110, rep: 5, time: "15 min",
+        what: "Pitch a monthly retainer or 'ongoing support' arrangement to your happy client.",
+        why: "Recurring income is the foundation everything else gets built on.",
+        min: "Send the offer message.",
+        skip: "You stay stuck in feast-or-famine project hunting.",
+        input: false },
+    ],
+    boss: { name: "First Long-Term Client", desc: "A client has committed to ongoing/retainer work. Chapter 1 complete.",
+      input: true, placeholder: "Describe your first retainer arrangement", clients: 1, rep: 10 },
+  },
+
+  /* ---------------- CHAPTER 2 — THE AGENCY BUILDER ---------------- */
+  {
+    id: 7, chapter: 2, title: "The Delegator", subtitle: "Stop being the bottleneck", est: "1–3 months",
+    quests: [
+      { id: "7a", name: "Document Your Workflow", xp: 120, rep: 3, time: "—",
+        what: "Write down how you do your work — your CLAUDE.md, coding standards, delivery process — so someone else could follow it.",
+        why: "You can't delegate what only lives in your head.",
+        min: "Document one process.",
+        skip: "You stay the only person who can do the work.", input: false },
+      { id: "7b", name: "Find Your First Subcontractor", xp: 150, rep: 5, time: "—",
+        what: "Identify 1 junior dev you could hand small tasks to (part-time / per-task).",
+        why: "Your first hire turns you from a worker into a builder.",
+        min: "Make a shortlist of candidates.",
+        skip: "Your income stays capped at your own hours.", input: true, placeholder: "Who could be your first hire?" },
+    ],
+    boss: { name: "First Task Delegated", desc: "Someone else completed real client work for you and you reviewed it.", input: false, team: 1, rep: 6 },
+  },
+  {
+    id: 8, chapter: 2, title: "The Juggler", subtitle: "Run multiple clients", est: "2–4 months",
+    quests: [
+      { id: "8a", name: "Land Client #2 & #3", xp: 160, rep: 6, time: "—",
+        what: "Use referrals + reviews to land two more concurrent clients.",
+        why: "One client is a job. Three is a business.",
+        min: "Land one more.",
+        skip: "One client leaving = income to zero.", input: false },
+      { id: "8b", name: "Build a Simple Pipeline", xp: 110, rep: 3, time: "—",
+        what: "Track leads, proposals, and active work in one place (Notion / spreadsheet).",
+        why: "You can't grow what you don't measure.",
+        min: "Make the tracker.",
+        skip: "Opportunities slip through the cracks.", input: false },
+    ],
+    boss: { name: "200K / Month", desc: "Combined monthly revenue (salary + freelance) crosses PHP 200,000.", input: true, placeholder: "Current monthly total (PHP)", rep: 8 },
+  },
+  {
+    id: 9, chapter: 2, title: "The Registrant", subtitle: "Make it official", est: "1–2 months",
+    quests: [
+      { id: "9a", name: "Register Your Business", xp: 140, rep: 5, time: "—",
+        what: "Register as a sole proprietor (DTI) — the first legal step toward an agency.",
+        why: "Real businesses can invoice, sign contracts, and be taken seriously.",
+        min: "Start the registration.",
+        skip: "You stay a freelancer, not a company.", input: true, placeholder: "Business name registered" },
+      { id: "9b", name: "Create an Agency Brand", xp: 100, rep: 4, time: "—",
+        what: "Name, logo, simple landing page for your agency.",
+        why: "A brand outlasts and out-earns a personal name.",
+        min: "Pick the name.",
+        skip: "Clients see a person, not a company.", input: true, placeholder: "Your agency name" },
+    ],
+    boss: { name: "Agency Exists", desc: "Registered business + brand + landing page are live.", input: true, placeholder: "Paste your agency landing page link", rep: 8 },
+  },
+  {
+    id: 10, chapter: 2, title: "The Systematizer", subtitle: "Build the machine", est: "2–3 months",
+    quests: [
+      { id: "10a", name: "Standardize Delivery", xp: 130, rep: 4, time: "—",
+        what: "Turn your process into repeatable templates: onboarding, scoping, delivery, handover.",
+        why: "Systems let the agency run without you in every detail.",
+        min: "Template one stage.",
+        skip: "Every project reinvents the wheel.", input: false },
+      { id: "10b", name: "Second Team Member", xp: 150, rep: 5, time: "—",
+        what: "Bring on a second reliable contractor as work grows.",
+        why: "Capacity = ability to say yes to bigger work.",
+        min: "Identify the person.",
+        skip: "You turn away growth because you're maxed out.", input: false },
+    ],
+    boss: { name: "Runs Without You", desc: "A project was delivered with minimal direct work from you.", input: false, team: 1, rep: 9 },
+  },
+  {
+    id: 11, chapter: 2, title: "The Reputation", subtitle: "Become known", est: "3–6 months",
+    quests: [
+      { id: "11a", name: "Collect Case Studies", xp: 120, rep: 5, time: "—",
+        what: "Publish 3 real client case studies with results on your agency site.",
+        why: "Proof at scale attracts bigger clients.",
+        min: "Publish one.",
+        skip: "You compete on price instead of proof.", input: false },
+      { id: "11b", name: "Become Visible in the Community", xp: 110, rep: 6, time: "—",
+        what: "Speak, post, or contribute consistently in the Salesforce ecosystem.",
+        why: "Inbound clients beat chasing cold ones.",
+        min: "One contribution.",
+        skip: "You stay a hidden gem.", input: false },
+    ],
+    boss: { name: "Inbound Lead", desc: "A client found YOU and reached out first.", input: true, placeholder: "Describe your first inbound lead", rep: 10 },
+  },
+  {
+    id: 12, chapter: 2, title: "The Stabilizer", subtitle: "Predictable income", est: "ongoing",
+    quests: [
+      { id: "12a", name: "3+ Retainer Clients", xp: 160, rep: 6, time: "—",
+        what: "Lock in at least 3 recurring clients for predictable monthly revenue.",
+        why: "Stability is what lets you take the next big risk.",
+        min: "Two retainers locked.",
+        skip: "Income stays unpredictable — risky with family costs.", input: false },
+      { id: "12b", name: "Pay Yourself + Fund", xp: 120, rep: 3, time: "—",
+        what: "Set a system: salary to yourself + fixed % to the Building Fund every month.",
+        why: "The building only happens if you pay it first, automatically.",
+        min: "Set up the auto-transfer.",
+        skip: "The fund never grows past good intentions.", input: false },
+    ],
+    boss: { name: "300K / Month Agency", desc: "Agency revenue alone reaches PHP 300,000/month. Chapter 2 complete.", input: true, placeholder: "Current agency monthly revenue (PHP)", rep: 12 },
+  },
+
+  /* ---------------- CHAPTER 3 — THE COMPANY OWNER ---------------- */
+  {
+    id: 13, chapter: 3, title: "The Incorporator", subtitle: "Build something that outlasts you", est: "2–3 months",
+    quests: [
+      { id: "13a", name: "Form a Corporation", xp: 160, rep: 6, time: "—",
+        what: "Register a formal corporation (SEC) — protect yourself and signal permanence.",
+        why: "Bigger clients and loans require a real legal entity.",
+        min: "Start the SEC process.",
+        skip: "You hit a ceiling on contract size and credibility.", input: true, placeholder: "Corporation name" },
+    ],
+    boss: { name: "Company Born", desc: "Your corporation is legally registered.", input: false, rep: 12 },
+  },
+  {
+    id: 14, chapter: 3, title: "The Team Lead", subtitle: "A real team", est: "3–6 months",
+    quests: [
+      { id: "14a", name: "Hire 3–5 People", xp: 180, rep: 7, time: "—",
+        what: "Grow to a stable team of 3–5 developers/admins.",
+        why: "A team multiplies what one person could ever bill.",
+        min: "Reach 3 people.",
+        skip: "You stay a small shop forever.", input: false },
+      { id: "14b", name: "First San Carlos Hire", xp: 200, rep: 10, time: "—",
+        what: "Hire your first developer FROM San Carlos City. This is the dream taking shape.",
+        why: "Bringing opportunity home was always part of the why.",
+        min: "Find one local candidate.",
+        skip: "The local-impact dream stays abstract.", input: true, placeholder: "Your first San Carlos hire" },
+    ],
+    boss: { name: "A Real Team", desc: "5-person team operating, including at least one San Carlos local.", input: false, team: 3, rep: 14 },
+  },
+  {
+    id: 15, chapter: 3, title: "The Office", subtitle: "A physical presence", est: "1–3 months",
+    quests: [
+      { id: "15a", name: "Get an Office", xp: 150, rep: 6, time: "—",
+        what: "Secure office space — even a small one in San Carlos.",
+        why: "A place makes the company real to clients and team.",
+        min: "Tour spaces and pick a budget.",
+        skip: "The company stays purely virtual.", input: true, placeholder: "Office location" },
+    ],
+    boss: { name: "Doors Open", desc: "Your team has a place to work.", input: false, rep: 12 },
+  },
+  {
+    id: 16, chapter: 3, title: "The Brand", subtitle: "Known in the ecosystem", est: "6–12 months",
+    quests: [
+      { id: "16a", name: "Become a Salesforce Partner", xp: 200, rep: 10, time: "—",
+        what: "Apply for and achieve Salesforce Consulting Partner status.",
+        why: "Partner status unlocks the biggest, most stable clients.",
+        min: "Begin the application.",
+        skip: "You're locked out of the top tier of work.", input: false },
+    ],
+    boss: { name: "Recognized Partner", desc: "Your company is a recognized Salesforce partner.", input: false, rep: 16 },
+  },
+  {
+    id: 17, chapter: 3, title: "The Scaler", subtitle: "Real revenue", est: "ongoing",
+    quests: [
+      { id: "17a", name: "500K+/Month", xp: 200, rep: 8, time: "—",
+        what: "Company revenue consistently exceeds PHP 500,000/month.",
+        why: "This is the engine that funds the building in cash or qualifies you for a loan.",
+        min: "Cross it once.",
+        skip: "The building stays years further away.", input: true, placeholder: "Current monthly company revenue (PHP)" },
+    ],
+    boss: { name: "Half a Million", desc: "PHP 500K+/month sustained for 3 months.", input: false, rep: 16 },
+  },
+  {
+    id: 18, chapter: 3, title: "The Capitalist", subtitle: "Fund the dream", est: "1–2 years cumulative",
+    quests: [
+      { id: "18a", name: "Build Fund to 3M+", xp: 220, rep: 8, time: "—",
+        what: "Grow your dedicated Building Fund past PHP 3,000,000 — half the target.",
+        why: "Halfway to the building. The summit is in sight.",
+        min: "Keep logging every deposit.",
+        skip: "Momentum stalls right before the goal.", input: false },
+    ],
+    boss: { name: "Halfway Funded", desc: "Building Fund crosses PHP 3M. Chapter 3 complete.", input: false, rep: 18 },
+  },
+
+  /* ---------------- CHAPTER 4 — THE BUILDER ---------------- */
+  {
+    id: 19, chapter: 4, title: "The Landowner", subtitle: "This was always what it was for", est: "few months",
+    quests: [
+      { id: "19a", name: "Buy the Lot", xp: 250, rep: 10, time: "—",
+        what: "Purchase land in San Carlos City for your building.",
+        why: "The dream becomes a coordinate on a map.",
+        min: "Shortlist 3 lots and get prices.",
+        skip: "The building has nowhere to stand.", input: true, placeholder: "Where is your lot?" },
+    ],
+    boss: { name: "Land Secured", desc: "You own the ground your building will rise from.", input: false, rep: 20 },
+  },
+  {
+    id: 20, chapter: 4, title: "The Architect", subtitle: "Break ground", est: "1+ year",
+    quests: [
+      { id: "20a", name: "Design & Permit", xp: 220, rep: 8, time: "—",
+        what: "Hire an architect, finalize the design, secure building permits.",
+        why: "The vision becomes a blueprint.",
+        min: "Engage an architect.",
+        skip: "A funded dream that never gets drawn.", input: false },
+      { id: "20b", name: "Begin Construction", xp: 280, rep: 12, time: "—",
+        what: "Break ground. Construction begins.",
+        why: "Years of quests, made physical.",
+        min: "Sign the contractor.",
+        skip: "—", input: true, placeholder: "The day you broke ground" },
+    ],
+    boss: { name: "Ground Broken", desc: "Construction has started in San Carlos City.", input: false, rep: 24 },
+  },
+  {
+    id: 21, chapter: 4, title: "The Builder", subtitle: "Dream realized", est: "—",
+    quests: [
+      { id: "21a", name: "Top It Off", xp: 400, rep: 20, time: "—",
+        what: "The building is complete. Ground floor commercial, your name on it, opportunity flowing into San Carlos.",
+        why: "Because this was never about Salesforce. It was about this.",
+        min: "—",
+        skip: "—", input: true, placeholder: "Write what you feel, standing in front of it." },
+    ],
+    boss: { name: "THE BUILDING STANDS", desc: "You did it, Jhosua. From a solo developer to a builder. The building stands in San Carlos City.", input: false, rep: 100 },
+  },
+];
+
+const DAILY_QUESTS = [
+  { id: "d_outreach", name: "Outreach", icon: "target", xp: 50, rep: 2,
+    desc: "Send 1 proposal or 1 cold/warm message. Just one. This is the whole game.", flagship: true },
+  { id: "d_craft", name: "Sharpen the Craft", icon: "book", xp: 30, rep: 1,
+    desc: "25 minutes on a cert, Trailhead, or a skill that raises your rate." },
+  { id: "d_fund", name: "Feed the Fund", icon: "piggy", xp: 20, rep: 0,
+    desc: "Log any amount saved toward the building. Even PHP 100.", fund: true },
+  { id: "d_proof", name: "Leave Proof", icon: "pen", xp: 20, rep: 1,
+    desc: "Write 1 sentence of what you learned or built today." },
+];
+
+const defaultState = {
+  currentLevel: 1,
+  lifetimeXP: 0,
+  streak: 0,
+  lastActiveDate: null,
+  stats: { income: 120000, clients: 0, buildingFund: 0, reputation: 0, team: 0 },
+  storyDone: {},
+  bossDone: {},
+  daily: { date: null, done: {}, fundToday: 0 },
+};
+
+const todayStr = () => new Date().toISOString().slice(0, 10);
+const peso = (n) => "PHP " + Number(n || 0).toLocaleString("en-PH");
+const BUILDING_GOAL = 6000000;
+
+/* ============================ ROOT ============================ */
+
+export default function App() {
+  const [session, setSession] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setAuthReady(true);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  if (!authReady) {
+    return (
+      <Shell>
+        <div style={S.center}><Cloud size={28} color="#d4a24e" /><div style={S.loadTxt}>Connecting…</div></div>
+      </Shell>
+    );
+  }
+
+  return session ? <Game session={session} /> : <Auth />;
+}
+
+/* ============================ AUTH ============================ */
+
+function Auth() {
+  const [mode, setMode] = useState("login");
+  const [email, setEmail] = useState("");
+  const [pw, setPw] = useState("");
+  const [msg, setMsg] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  const submit = async () => {
+    setMsg(null);
+    if (!email || pw.length < 6) { setMsg({ t: "err", m: "Enter email and a password of 6+ characters." }); return; }
+    setBusy(true);
+    try {
+      if (mode === "signup") {
+        const { error } = await supabase.auth.signUp({ email, password: pw });
+        if (error) throw error;
+        setMsg({ t: "ok", m: "Account created. If email confirmation is on, check your inbox — otherwise just log in." });
+        setMode("login");
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password: pw });
+        if (error) throw error;
+      }
+    } catch (e) {
+      setMsg({ t: "err", m: e.message || "Something went wrong." });
+    }
+    setBusy(false);
+  };
+
+  return (
+    <Shell>
+      <FontInjector />
+      <div style={S.authWrap}>
+        <Hammer size={34} color="#d4a24e" />
+        <div style={S.authTitle}>ROAD TO BUILDER</div>
+        <div style={S.authSub}>Your journey from developer to a building in San Carlos.</div>
+
+        <div style={S.authCard}>
+          <div style={S.authTabs}>
+            <button onClick={() => setMode("login")} style={{ ...S.authTab, ...(mode === "login" ? S.authTabOn : {}) }}>Log In</button>
+            <button onClick={() => setMode("signup")} style={{ ...S.authTab, ...(mode === "signup" ? S.authTabOn : {}) }}>Sign Up</button>
+          </div>
+
+          <input style={S.authInput} type="email" placeholder="Email" value={email}
+            onChange={(e) => setEmail(e.target.value)} autoCapitalize="none" />
+          <input style={S.authInput} type="password" placeholder="Password (6+ chars)" value={pw}
+            onChange={(e) => setPw(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && submit()} />
+
+          {msg && <div style={{ ...S.authMsg, color: msg.t === "err" ? "#d98a6a" : "#9cc080" }}>{msg.m}</div>}
+
+          <button style={S.authBtn} onClick={submit} disabled={busy}>
+            {busy ? "Please wait…" : mode === "signup" ? "Create Account" : "Enter"}
+          </button>
+        </div>
+        <div style={S.authHint}>Use the same email + password on your phone and computer to sync.</div>
+      </div>
+    </Shell>
+  );
+}
+
+/* ============================ GAME ============================ */
+
+function Game({ session }) {
+  const [state, setState] = useState(defaultState);
+  const [loaded, setLoaded] = useState(false);
+  const [openQuest, setOpenQuest] = useState(null);
+  const [drafts, setDrafts] = useState({});
+  const [fundInput, setFundInput] = useState("");
+  const [showMap, setShowMap] = useState(false);
+  const [flash, setFlash] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const saveTimer = useRef(null);
+  const userId = session.user.id;
+
+  /* ---- load from cloud ---- */
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await supabase
+        .from("game_state").select("state").eq("user_id", userId).maybeSingle();
+      if (!error && data && data.state) {
+        setState({ ...defaultState, ...data.state, stats: { ...defaultState.stats, ...(data.state.stats || {}) } });
+      }
+      setLoaded(true);
+    })();
+  }, [userId]);
+
+  /* ---- daily reset ---- */
+  useEffect(() => {
+    if (!loaded) return;
+    const t = todayStr();
+    if (state.daily.date !== t) {
+      setState((s) => ({ ...s, daily: { date: t, done: {}, fundToday: 0 } }));
+    }
+  }, [loaded, state.daily.date]);
+
+  /* ---- debounced cloud save ---- */
+  const persist = useCallback((next) => {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    setSaving(true);
+    saveTimer.current = setTimeout(async () => {
+      await supabase.from("game_state").upsert(
+        { user_id: userId, state: next, updated_at: new Date().toISOString() },
+        { onConflict: "user_id" }
+      );
+      setSaving(false);
+    }, 700);
+  }, [userId]);
+
+  const update = (fn) => setState((s) => { const n = fn(s); persist(n); return n; });
+
+  const fireFlash = (m) => { setFlash(m); setTimeout(() => setFlash(null), 2200); };
+
+  const level = LEVELS.find((l) => l.id === state.currentLevel) || LEVELS[LEVELS.length - 1];
+  const chapter = CHAPTERS.find((c) => c.id === level.chapter);
+  const levelQuestsDone = level.quests.filter((q) => state.storyDone[q.id]).length;
+  const levelProgress = Math.round((levelQuestsDone / level.quests.length) * 100);
+  const bossReady = levelQuestsDone === level.quests.length;
+  const isFinal = level.id === 21 && state.bossDone[21];
+  const fundPct = Math.min(100, (state.stats.buildingFund / BUILDING_GOAL) * 100);
+
+  const completeStory = (q, val) => {
+    if (q.input && (!val || val.trim().length < 2)) { fireFlash("Write something real to complete it."); return; }
+    update((s) => ({
+      ...s,
+      storyDone: { ...s.storyDone, [q.id]: q.input ? val.trim() : true },
+      lifetimeXP: s.lifetimeXP + q.xp,
+      stats: { ...s.stats, reputation: s.stats.reputation + (q.rep || 0) },
+    }));
+    fireFlash(`+${q.xp} XP — ${q.name} done`);
+    setOpenQuest(null);
+  };
+
+  const defeatBoss = (val) => {
+    const b = level.boss;
+    if (b.input && (!val || val.trim().length < 1)) { fireFlash("Enter the proof to defeat the boss."); return; }
+    update((s) => ({
+      ...s,
+      bossDone: { ...s.bossDone, [level.id]: b.input ? val.trim() : true },
+      lifetimeXP: s.lifetimeXP + 200,
+      stats: {
+        ...s.stats,
+        reputation: s.stats.reputation + (b.rep || 0),
+        clients: s.stats.clients + (b.clients || 0),
+        team: s.stats.team + (b.team || 0),
+      },
+      currentLevel: Math.min(s.currentLevel + 1, 21),
+    }));
+    fireFlash(`BOSS DEFEATED — ${b.name}`);
+    setOpenQuest(null);
+  };
+
+  const doDaily = (dq) => {
+    if (state.daily.done[dq.id]) return;
+    const t = todayStr();
+    update((s) => {
+      const wasNewDay = s.lastActiveDate !== t;
+      let extraFund = 0;
+      if (dq.fund) extraFund = parseFloat(String(fundInput).replace(/[^0-9.]/g, "")) || 0;
+      return {
+        ...s,
+        lifetimeXP: s.lifetimeXP + dq.xp,
+        streak: wasNewDay ? s.streak + 1 : s.streak,
+        lastActiveDate: t,
+        stats: { ...s.stats, reputation: s.stats.reputation + (dq.rep || 0), buildingFund: s.stats.buildingFund + extraFund },
+        daily: { ...s.daily, date: t, done: { ...s.daily.done, [dq.id]: true }, fundToday: s.daily.fundToday + extraFund },
+      };
+    });
+    if (dq.fund) setFundInput("");
+    fireFlash(`+${dq.xp} XP — ${dq.name}`);
+  };
+
+  const resetGame = () => {
+    if (!window.confirm("Reset all progress? This cannot be undone.")) return;
+    update(() => ({ ...defaultState }));
+    fireFlash("Game reset. New journey begins.");
+  };
+
+  const logout = () => supabase.auth.signOut();
+
+  if (!loaded) {
+    return <Shell><FontInjector /><div style={S.center}><Hammer size={28} color="#d4a24e" /><div style={S.loadTxt}>Loading your journey…</div></div></Shell>;
+  }
+
+  return (
+    <Shell>
+      <FontInjector />
+      {flash && <div style={S.flash}>{flash}</div>}
+
+      <div style={S.wrap}>
+        {/* header */}
+        <div style={S.card}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <div style={S.heroName}>JHOSUA ARDA</div>
+              <div style={S.heroSub}>Salesforce Developer · San Carlos City</div>
+            </div>
+            <div style={{ display: "flex", gap: 6 }}>
+              <span style={S.syncDot} title={saving ? "Saving…" : "Synced"}>
+                <Cloud size={13} color={saving ? "#e0b563" : "#7fa86a"} />
+              </span>
+              <button onClick={resetGame} style={S.iconBtn} title="Reset"><RotateCcw size={14} /></button>
+              <button onClick={logout} style={S.iconBtn} title="Log out"><LogOut size={14} /></button>
+            </div>
+          </div>
+
+          <div style={S.chapterTag}><Crown size={13} color="#d4a24e" /><span>Chapter {chapter.id}: {chapter.name}</span></div>
+          <div style={S.tagline}>"{chapter.tagline}"</div>
+
+          <div style={S.levelRow}><span style={S.levelNo}>LV {level.id}</span><span style={S.levelTitle}>{level.title}</span></div>
+          <div style={S.barOuter}><div style={{ ...S.barInner, width: `${levelProgress}%` }} /></div>
+          <div style={S.barMeta}>
+            <span>{levelQuestsDone}/{level.quests.length} quests</span>
+            <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Flame size={13} color="#e08a3c" /> {state.streak} day streak</span>
+            <span>{state.lifetimeXP} XP</span>
+          </div>
+
+          <div style={S.statsGrid}>
+            <Stat icon={<Coins size={15} />} label="Income/mo" val={peso(state.stats.income)} />
+            <Stat icon={<Users size={15} />} label="Clients" val={state.stats.clients} />
+            <Stat icon={<Briefcase size={15} />} label="Team" val={state.stats.team} />
+            <Stat icon={<Star size={15} />} label="Reputation" val={state.stats.reputation} />
+          </div>
+
+          <div style={S.fundBox}>
+            <div style={S.fundHead}>
+              <span style={{ display: "flex", alignItems: "center", gap: 6 }}><Building2 size={15} color="#d4a24e" /> BUILDING FUND</span>
+              <span style={{ color: "#d4a24e" }}>{peso(state.stats.buildingFund)} / {peso(BUILDING_GOAL)}</span>
+            </div>
+            <div style={S.fundBarOuter}><div style={{ ...S.fundBarInner, width: `${fundPct}%` }} /></div>
+            <div style={S.fundCaption}>The building in San Carlos. Every quest leads here.</div>
+          </div>
+        </div>
+
+        {/* daily */}
+        <SectionTitle icon={<Flame size={16} />} text="DAILY QUESTS" sub="Reset every day · keep the streak alive" />
+        {DAILY_QUESTS.map((dq) => {
+          const done = !!state.daily.done[dq.id];
+          return (
+            <div key={dq.id} style={{ ...S.dailyCard, ...(done ? S.dailyDone : {}), ...(dq.flagship ? S.flagship : {}) }}>
+              <div style={S.dailyIcon}>{iconFor(dq.icon)}</div>
+              <div style={{ flex: 1 }}>
+                <div style={S.dailyName}>{dq.name}{dq.flagship && <span style={S.flagBadge}>MOST IMPORTANT</span>}</div>
+                <div style={S.dailyDesc}>{dq.desc}</div>
+                {dq.fund && !done && (
+                  <input value={fundInput} onChange={(e) => setFundInput(e.target.value)} placeholder="PHP amount saved today" style={S.fundInput} inputMode="numeric" />
+                )}
+              </div>
+              <button onClick={() => doDaily(dq)} disabled={done} style={{ ...S.checkBtn, ...(done ? S.checkBtnDone : {}) }}>
+                {done ? <Check size={16} /> : `+${dq.xp}`}
+              </button>
+            </div>
+          );
+        })}
+
+        {/* story */}
+        <SectionTitle icon={<Swords size={16} />} text={`LEVEL ${level.id} — ${level.title.toUpperCase()}`} sub={`${level.subtitle} · est. ${level.est}`} />
+        {level.quests.map((q) => {
+          const done = !!state.storyDone[q.id];
+          const open = openQuest === q.id;
+          return (
+            <div key={q.id} style={{ ...S.questCard, ...(done ? S.questDone : {}) }}>
+              <div style={S.questHead} onClick={() => setOpenQuest(open ? null : q.id)}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ ...S.questDot, ...(done ? S.questDotDone : {}) }}>{done ? <Check size={13} /> : null}</div>
+                  <div><div style={S.questName}>{q.name}</div><div style={S.questXp}>+{q.xp} XP{q.rep ? ` · +${q.rep} rep` : ""} · {q.time}</div></div>
+                </div>
+                {open ? <ChevronUp size={18} color="#8a7f6a" /> : <ChevronDown size={18} color="#8a7f6a" />}
+              </div>
+              {open && (
+                <div style={S.questBody}>
+                  <Field label="WHAT TO DO" text={q.what} />
+                  <Field label="WHY IT MATTERS" text={q.why} accent />
+                  <Field label="MINIMUM VERSION" text={q.min} />
+                  {q.skip && q.skip !== "—" && <Field label="IF SKIPPED" text={q.skip} warn />}
+                  {!done && q.input && (
+                    <textarea value={drafts[q.id] || ""} onChange={(e) => setDrafts({ ...drafts, [q.id]: e.target.value })} placeholder={q.placeholder} style={S.textarea} />
+                  )}
+                  {done ? (
+                    <div style={S.doneNote}><Check size={13} color="#7fa86a" /> Completed
+                      {typeof state.storyDone[q.id] === "string" && <span style={S.savedInput}>"{state.storyDone[q.id]}"</span>}
+                    </div>
+                  ) : (
+                    <button style={S.completeBtn} onClick={() => completeStory(q, drafts[q.id])}>Complete Quest</button>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {/* boss */}
+        {!isFinal && (
+          <div style={{ ...S.bossCard, ...(bossReady ? S.bossReady : {}) }}>
+            <div style={S.bossHead}>{bossReady ? <Swords size={18} color="#e0b563" /> : <Lock size={18} color="#6b6151" />}<span style={S.bossLabel}>BOSS</span></div>
+            <div style={S.bossName}>{level.boss.name}</div>
+            <div style={S.bossDesc}>{level.boss.desc}</div>
+            {bossReady ? (
+              <>
+                {level.boss.input && (
+                  <input value={drafts["boss_" + level.id] || ""} onChange={(e) => setDrafts({ ...drafts, ["boss_" + level.id]: e.target.value })} placeholder={level.boss.placeholder} style={S.bossInput} />
+                )}
+                <button style={S.bossBtn} onClick={() => defeatBoss(drafts["boss_" + level.id])}>Defeat Boss · Advance to Level {Math.min(level.id + 1, 21)}</button>
+              </>
+            ) : (
+              <div style={S.bossLocked}>Complete all {level.quests.length} quests above to challenge the boss.</div>
+            )}
+          </div>
+        )}
+
+        {isFinal && (
+          <div style={S.victory}><Trophy size={40} color="#e0b563" /><div style={S.victoryTitle}>THE BUILDING STANDS</div><div style={S.victorySub}>From solo developer to builder. You did it, Jhosua.</div></div>
+        )}
+
+        {/* map */}
+        <button style={S.mapToggle} onClick={() => setShowMap(!showMap)}><MapPin size={15} /> {showMap ? "Hide" : "Show"} World Map (21 Levels)</button>
+        {showMap && (
+          <div style={S.card}>
+            {CHAPTERS.map((ch) => (
+              <div key={ch.id} style={{ marginBottom: 18 }}>
+                <div style={S.mapChapter}>CH {ch.id} · {ch.name}</div>
+                {LEVELS.filter((l) => l.chapter === ch.id).map((l) => {
+                  const isDone = !!state.bossDone[l.id];
+                  const isCurrent = l.id === state.currentLevel;
+                  const isLocked = l.id > state.currentLevel;
+                  return (
+                    <div key={l.id} style={{ ...S.mapNode, ...(isCurrent ? S.mapCurrent : {}), ...(isLocked ? S.mapLocked : {}) }}>
+                      <div style={{ width: 24, textAlign: "center" }}>
+                        {isDone ? <Check size={14} color="#7fa86a" /> : isLocked ? <Lock size={12} color="#5a5346" /> : <span style={{ color: "#d4a24e" }}>●</span>}
+                      </div>
+                      <span style={{ fontWeight: isCurrent ? 700 : 400 }}>LV{l.id} · {l.title}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div style={S.footer}>Signed in as {session.user.email} · synced to the cloud</div>
+      </div>
+    </Shell>
+  );
+}
+
+/* ============================ UI BITS ============================ */
+
+function Shell({ children }) {
+  return <div style={S.root}><div style={S.grain} />{children}</div>;
+}
+function Stat({ icon, label, val }) {
+  return <div style={S.statCell}><div style={{ color: "#d4a24e", marginBottom: 4 }}>{icon}</div><div style={S.statVal}>{val}</div><div style={S.statLabel}>{label}</div></div>;
+}
+function SectionTitle({ icon, text, sub }) {
+  return <div style={S.sectionTitle}><div style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={{ color: "#d4a24e" }}>{icon}</span><span style={S.sectionText}>{text}</span></div>{sub && <div style={S.sectionSub}>{sub}</div>}</div>;
+}
+function Field({ label, text, accent, warn }) {
+  return <div style={{ marginBottom: 10 }}><div style={{ ...S.fieldLabel, color: warn ? "#d98a6a" : accent ? "#d4a24e" : "#8a7f6a" }}>{label}</div><div style={{ ...S.fieldText, color: warn ? "#d9b3a3" : "#cabfa8" }}>{text}</div></div>;
+}
+function iconFor(name) {
+  const c = "#d4a24e";
+  if (name === "target") return <Target size={18} color={c} />;
+  if (name === "book") return <BookOpen size={18} color={c} />;
+  if (name === "piggy") return <PiggyBank size={18} color={c} />;
+  if (name === "pen") return <PenLine size={18} color={c} />;
+  return <Hammer size={18} color={c} />;
+}
+function FontInjector() {
+  return (
+    <style>{`
+      @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Spectral:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap');
+      * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+      body { margin:0; }
+      textarea, input { font-family: 'Spectral', serif; }
+      @keyframes flashIn { from { opacity:0; transform: translate(-50%,-8px);} to {opacity:1; transform:translate(-50%,0);} }
+      @keyframes glow { 0%,100%{ box-shadow:0 0 12px rgba(212,162,78,.25);} 50%{ box-shadow:0 0 22px rgba(212,162,78,.5);} }
+      ::-webkit-scrollbar{ width:7px;} ::-webkit-scrollbar-thumb{ background:#3a3327; border-radius:4px;}
+    `}</style>
+  );
+}
+
+/* ============================ STYLES ============================ */
+
+const ink = "#e8dcc4", muted = "#8a7f6a", gold = "#d4a24e", bg = "#100d09", card = "#1a1610";
+
+const S = {
+  root: { minHeight: "100vh", background: `radial-gradient(circle at 50% 0%, #1d1810 0%, ${bg} 60%)`, color: ink, fontFamily: "Spectral, serif", position: "relative", paddingBottom: 40 },
+  grain: { position: "fixed", inset: 0, pointerEvents: "none", opacity: 0.04, backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.85'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")" },
+  center: { minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12 },
+  loadTxt: { fontFamily: "Cinzel, serif", letterSpacing: 2, color: ink },
+  wrap: { maxWidth: 600, margin: "0 auto", padding: "20px 16px", position: "relative", zIndex: 1 },
+  flash: { position: "fixed", top: 18, left: "50%", transform: "translateX(-50%)", zIndex: 50, background: "#241d12", border: `1px solid ${gold}`, color: gold, padding: "10px 18px", borderRadius: 8, fontFamily: "Cinzel, serif", fontSize: 13, letterSpacing: 0.5, animation: "flashIn .3s ease", boxShadow: "0 8px 30px rgba(0,0,0,.5)" },
+
+  /* auth */
+  authWrap: { maxWidth: 420, margin: "0 auto", padding: "60px 20px", textAlign: "center", position: "relative", zIndex: 1 },
+  authTitle: { fontFamily: "Cinzel, serif", fontSize: 26, fontWeight: 700, color: ink, letterSpacing: 2, marginTop: 14 },
+  authSub: { color: muted, fontSize: 14, marginTop: 8, fontStyle: "italic" },
+  authCard: { background: card, border: "1px solid #2c2519", borderRadius: 14, padding: 22, marginTop: 28, textAlign: "left" },
+  authTabs: { display: "flex", gap: 8, marginBottom: 18 },
+  authTab: { flex: 1, padding: 10, background: "transparent", border: "1px solid #2c2519", borderRadius: 8, color: muted, fontFamily: "Cinzel, serif", fontSize: 13, cursor: "pointer" },
+  authTabOn: { background: "#241d12", borderColor: gold, color: gold },
+  authInput: { width: "100%", background: "#15110b", border: "1px solid #2c2519", color: ink, borderRadius: 8, padding: "12px 14px", fontSize: 15, outline: "none", marginBottom: 12 },
+  authMsg: { fontSize: 13, marginBottom: 12, lineHeight: 1.4 },
+  authBtn: { width: "100%", padding: 13, background: "linear-gradient(90deg,#b8862f,#e0b563)", border: "none", borderRadius: 9, color: "#1a1610", fontFamily: "Cinzel, serif", fontSize: 14, fontWeight: 700, letterSpacing: 0.5, cursor: "pointer" },
+  authHint: { color: "#5a5346", fontSize: 12, marginTop: 18, fontStyle: "italic" },
+
+  card: { background: card, border: "1px solid #2c2519", borderRadius: 14, padding: 18, marginBottom: 16, boxShadow: "0 4px 24px rgba(0,0,0,.3)" },
+  heroName: { fontFamily: "Cinzel, serif", fontSize: 22, fontWeight: 700, color: ink, letterSpacing: 1 },
+  heroSub: { fontSize: 12.5, color: muted, marginTop: 2 },
+  syncDot: { display: "flex", alignItems: "center", padding: 7, border: "1px solid #2c2519", borderRadius: 8 },
+  iconBtn: { background: "transparent", border: "1px solid #2c2519", color: muted, borderRadius: 8, padding: 7, cursor: "pointer", display: "flex" },
+
+  chapterTag: { display: "flex", alignItems: "center", gap: 6, marginTop: 14, fontFamily: "Cinzel, serif", fontSize: 12.5, color: ink, letterSpacing: 0.5 },
+  tagline: { fontStyle: "italic", color: muted, fontSize: 13, marginTop: 3, marginBottom: 14 },
+  levelRow: { display: "flex", alignItems: "baseline", gap: 10 },
+  levelNo: { fontFamily: "Cinzel, serif", fontSize: 13, color: gold, fontWeight: 700 },
+  levelTitle: { fontFamily: "Cinzel, serif", fontSize: 17, color: ink, fontWeight: 600 },
+  barOuter: { height: 9, background: "#241f15", borderRadius: 6, marginTop: 8, overflow: "hidden", border: "1px solid #2c2519" },
+  barInner: { height: "100%", background: "linear-gradient(90deg,#9c7028,#d4a24e,#e0b563)", borderRadius: 6, transition: "width .5s ease" },
+  barMeta: { display: "flex", justifyContent: "space-between", fontSize: 11.5, color: muted, marginTop: 6 },
+  statsGrid: { display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginTop: 16 },
+  statCell: { background: "#15110b", border: "1px solid #2c2519", borderRadius: 10, padding: "10px 4px", textAlign: "center" },
+  statVal: { fontFamily: "Cinzel, serif", fontSize: 12.5, color: ink, fontWeight: 600 },
+  statLabel: { fontSize: 9.5, color: muted, marginTop: 2, textTransform: "uppercase", letterSpacing: 0.4 },
+  fundBox: { marginTop: 16, background: "#15110b", border: "1px solid #322a1b", borderRadius: 10, padding: 12 },
+  fundHead: { display: "flex", justifyContent: "space-between", fontFamily: "Cinzel, serif", fontSize: 11.5, color: ink, letterSpacing: 0.5 },
+  fundBarOuter: { height: 7, background: "#241f15", borderRadius: 5, marginTop: 8, overflow: "hidden" },
+  fundBarInner: { height: "100%", background: "linear-gradient(90deg,#6b8e5a,#d4a24e)", transition: "width .6s ease" },
+  fundCaption: { fontSize: 11, color: muted, fontStyle: "italic", marginTop: 7 },
+
+  sectionTitle: { margin: "22px 4px 12px" },
+  sectionText: { fontFamily: "Cinzel, serif", fontSize: 14, color: ink, letterSpacing: 1, fontWeight: 600 },
+  sectionSub: { fontSize: 11.5, color: muted, marginTop: 3, marginLeft: 24 },
+
+  dailyCard: { display: "flex", alignItems: "center", gap: 12, background: card, border: "1px solid #2c2519", borderRadius: 12, padding: 12, marginBottom: 10 },
+  flagship: { borderColor: "#4a3c1f", background: "#1d180f" },
+  dailyDone: { opacity: 0.55 },
+  dailyIcon: { width: 40, height: 40, borderRadius: 10, background: "#15110b", border: "1px solid #2c2519", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  dailyName: { fontFamily: "Cinzel, serif", fontSize: 13.5, color: ink, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" },
+  flagBadge: { fontSize: 8.5, background: gold, color: "#1a1610", padding: "2px 6px", borderRadius: 4, fontWeight: 700, letterSpacing: 0.5 },
+  dailyDesc: { fontSize: 12, color: muted, marginTop: 3, lineHeight: 1.4 },
+  fundInput: { marginTop: 8, width: "100%", background: "#15110b", border: "1px solid #2c2519", color: ink, borderRadius: 8, padding: "8px 10px", fontSize: 13, outline: "none" },
+  checkBtn: { minWidth: 48, height: 40, borderRadius: 10, border: `1px solid ${gold}`, background: "transparent", color: gold, fontFamily: "Cinzel, serif", fontSize: 13, fontWeight: 700, cursor: "pointer", flexShrink: 0 },
+  checkBtnDone: { background: "#283520", borderColor: "#4a6138", color: "#9cc080", cursor: "default" },
+
+  questCard: { background: card, border: "1px solid #2c2519", borderRadius: 12, marginBottom: 10, overflow: "hidden" },
+  questDone: { borderColor: "#33402a", background: "#161811" },
+  questHead: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: 14, cursor: "pointer" },
+  questDot: { width: 22, height: 22, borderRadius: "50%", border: `1px solid ${muted}`, display: "flex", alignItems: "center", justifyContent: "center", color: "#9cc080", flexShrink: 0 },
+  questDotDone: { background: "#33402a", borderColor: "#4a6138" },
+  questName: { fontFamily: "Cinzel, serif", fontSize: 14, color: ink, fontWeight: 600 },
+  questXp: { fontSize: 11, color: gold, marginTop: 2 },
+  questBody: { padding: "0 14px 16px", borderTop: "1px solid #221c12" },
+  fieldLabel: { fontSize: 10, letterSpacing: 1, fontWeight: 700, marginTop: 12, marginBottom: 3, fontFamily: "Cinzel, serif" },
+  fieldText: { fontSize: 13.5, lineHeight: 1.5 },
+  textarea: { width: "100%", minHeight: 70, marginTop: 12, background: "#15110b", border: "1px solid #2c2519", color: ink, borderRadius: 8, padding: 10, fontSize: 13.5, outline: "none", resize: "vertical" },
+  completeBtn: { marginTop: 14, width: "100%", padding: 11, background: "linear-gradient(90deg,#9c7028,#d4a24e)", border: "none", borderRadius: 9, color: "#1a1610", fontFamily: "Cinzel, serif", fontSize: 13.5, fontWeight: 700, letterSpacing: 0.5, cursor: "pointer" },
+  doneNote: { marginTop: 12, fontSize: 12.5, color: "#9cc080", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" },
+  savedInput: { color: muted, fontStyle: "italic", fontSize: 12 },
+
+  bossCard: { background: "#16110a", border: "1px solid #2c2519", borderRadius: 14, padding: 18, marginTop: 16, marginBottom: 16, opacity: 0.7 },
+  bossReady: { opacity: 1, borderColor: gold, animation: "glow 2.5s ease-in-out infinite" },
+  bossHead: { display: "flex", alignItems: "center", gap: 8 },
+  bossLabel: { fontFamily: "Cinzel, serif", fontSize: 12, letterSpacing: 2, color: gold, fontWeight: 700 },
+  bossName: { fontFamily: "Cinzel, serif", fontSize: 19, color: ink, fontWeight: 700, marginTop: 8 },
+  bossDesc: { fontSize: 13.5, color: "#cabfa8", marginTop: 6, lineHeight: 1.5 },
+  bossInput: { width: "100%", marginTop: 14, background: "#15110b", border: "1px solid #2c2519", color: ink, borderRadius: 8, padding: "10px 12px", fontSize: 14, outline: "none" },
+  bossBtn: { marginTop: 14, width: "100%", padding: 13, background: "linear-gradient(90deg,#b8862f,#e0b563)", border: "none", borderRadius: 9, color: "#1a1610", fontFamily: "Cinzel, serif", fontSize: 14, fontWeight: 700, letterSpacing: 0.5, cursor: "pointer" },
+  bossLocked: { marginTop: 12, fontSize: 12.5, color: muted, fontStyle: "italic" },
+
+  victory: { textAlign: "center", padding: 30, background: "#16110a", border: `1px solid ${gold}`, borderRadius: 14, marginTop: 16, animation: "glow 2.5s ease-in-out infinite" },
+  victoryTitle: { fontFamily: "Cinzel, serif", fontSize: 22, color: gold, fontWeight: 700, marginTop: 12, letterSpacing: 1 },
+  victorySub: { fontSize: 14, color: ink, marginTop: 8 },
+
+  mapToggle: { width: "100%", padding: 12, background: "transparent", border: "1px solid #2c2519", color: muted, borderRadius: 10, fontFamily: "Cinzel, serif", fontSize: 12.5, letterSpacing: 0.5, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 16 },
+  mapChapter: { fontFamily: "Cinzel, serif", fontSize: 12, color: gold, letterSpacing: 1, marginBottom: 8, paddingBottom: 6, borderBottom: "1px solid #221c12" },
+  mapNode: { display: "flex", alignItems: "center", gap: 8, padding: "6px 0", fontSize: 13, color: ink },
+  mapCurrent: { color: gold },
+  mapLocked: { color: "#5a5346" },
+  footer: { textAlign: "center", fontSize: 11.5, color: "#5a5346", fontStyle: "italic", marginTop: 10 },
+};

@@ -397,54 +397,78 @@ const DAILY_QUESTS = [
   { id: "d_outreach", name: "Send Proposals", icon: "target", xp: 50, rep: 2,
     desc: "Send up to 2 targeted Upwork proposals. On dry days, 1 close-enough Salesforce job counts.", flagship: true,
     how: [
-      "Only spend Connects on a fit: niche match (Service Cloud / SLA / RMA / field service), payment-verified client, job posted in the last 24–48h, under ~20 proposals so far.",
-      "When true Service Cloud jobs are scarce, widen slightly: general Admin/Dev, Flow automation, case management, customer portals. Your Dyson / Mimecast experience still makes you credible.",
-      "Lead with their problem, not your résumé. One specific line proving you've solved this exact thing before beats five lines about you.",
-      "Expect ~1 reply per 10–15 proposals at the start. That's normal. The only goal right now is the FIRST reply.",
+      "H|When to spend a Connect",
+      "Only fire a proposal when it's a real fit. Check all four before spending: (1) niche match — Service Cloud, SLA, Entitlements, RMA, field service; (2) the client is payment-verified; (3) the job was posted in the last 24–48 hours; (4) fewer than ~20 proposals so far. If it fails any of these, skip it and save the Connect for a better job.",
+      "H|On dry days, widen one notch",
+      "When there are no true Service Cloud jobs, it's fine to take a close-enough Salesforce job: general Admin/Dev work, Flow automation, case management, or customer portals. Your Dyson and Mimecast production experience still makes you credible there — just adjust the angle of your opening line.",
+      "H|How to open the proposal",
+      "Lead with THEIR problem and one line of proof you've solved exactly this before. Do not open with 'I am a Salesforce developer with X years of experience' — they've read that 40 times and it puts you in the same pile as everyone else.",
+      "GOOD|I saw you need SLA milestones that actually pause the clock when you're waiting on the customer. I built exactly this for a global support team at Dyson — entitlements, business-hours logic, and escalation rules that held up under real case volume. Here's how I'd approach yours: ...",
+      "BAD|Hi, I am a certified Salesforce developer with experience in many projects. I am hardworking and can deliver quality work. Please consider me for this job.",
+      "Expect roughly 1 reply for every 10–15 proposals when you're starting. That is completely normal — don't read silence as failure. The only target right now is your FIRST reply.",
     ] },
   { id: "d_connect", name: "LinkedIn Connections", icon: "users", xp: 30, rep: 2,
     desc: "Send 5 connection requests with a short personal note. Every day, no exceptions.",
     how: [
-      "Target titles: VP / Head of Customer Success, Service Operations, Field Service, or Salesforce Admins at companies of 50–500 employees (big enough to run Salesforce, small enough to lack a full dev team).",
-      "NO pitch. Just plant the flag. Example: 'Hi [Name], I'm a Salesforce developer focused on Service Cloud and SLA workflows for post-sale ops teams — thought it'd be good to connect.'",
-      "This is your safety net on slow Upwork days. It costs nothing and builds the pipeline you'll actually need later.",
+      "H|Who to target",
+      "Go after the people who own the problem you solve: VP / Head / Director of Customer Success, Service Operations, Field Service, or Support — plus Salesforce Admins at companies with 50–500 employees. That size is the sweet spot: big enough to run Salesforce seriously, small enough that they don't have a full in-house dev bench.",
+      "H|The rule: don't pitch, just connect",
+      "Your job here is to start a relationship, not make a sale. Connect, and where you naturally can, share something useful. Add value publicly before you ever ask for anything privately — this is your runway, and you build the trust before the takeoff. A connection note is just you planting the flag so they recognise your name later.",
+      "H|Example notes — copy and tweak",
+      "GOOD|Hi [Name] — I work with post-sale support teams on Salesforce Service Cloud (SLAs, entitlements, returns). Always glad to connect with people leading service ops.",
+      "GOOD|Hi [Name] — noticed [Company] is scaling its support org. I build the Service Cloud side of that — SLA tracking, case automation, returns workflows. Thought it'd be good to be connected.",
+      "BAD|Hi, I'm a Salesforce developer looking for clients. Do you need any Salesforce work done? I can offer good rates.",
+      "Five a day, every day, no exceptions. This is your safety net when Upwork is dry — it costs nothing and quietly builds the pipeline you'll need anyway.",
     ] },
   { id: "d_comment", name: "Comment Ladder", icon: "comment", xp: 40, rep: 3,
     desc: "Leave 3 valuable comments — one per tier — on posts in your niche. Be the familiar face.",
     how: [
-      "THE LADDER — hit one comment on each tier:",
-      "• Tier 1 — Creators your dream clients follow. Goal: borrow their trust and get seen by their audience.",
-      "• Tier 2 — Peers & complementary freelancers in your niche. Goal: build credibility by proximity.",
-      "• Tier 3 — Dream clients themselves. Goal: warm them up with zero pitching — just make them look good.",
-      "THE FORMULA: compliment the post → add something specific/smart → end on a question to keep the conversation going. Never 'Love this! 🔥'.",
-      "WHY IT WORKS: every valuable comment is a tiny billboard. When the same people keep seeing your name next to something sharp, they start filing you as a trusted voice — before you ever pitch.",
+      "H|Why comments are underrated",
+      "Think about your own behaviour: you read a post from someone you admire, then drop straight into the comments to see what the 'town square' is saying — the comments are now part of the content. If your name keeps appearing next to something valuable, people start associating you as a trusted voice in the industry, long before you ever pitch. Every good comment is a small billboard for your business.",
+      "H|The Ladder — one comment per tier",
+      "Tier 1 — Creators your dream clients follow (Salesforce MVPs, Service Cloud thought leaders, big Salesforce voices). Objective: borrow their trust and get seen by their audience.",
+      "Tier 2 — Peers & collaborators in your niche (other Salesforce consultants, admins, integration devs, complementary freelancers). Objective: build credibility by proximity. Your future clients are already reading a lot of Salesforce content — be present in those same comment sections.",
+      "Tier 3 — Dream clients themselves (heads of support / service ops at companies you'd love to work with). Objective: warm them up with zero pitching. You're literally just helping them look good on LinkedIn. Over time, they get familiar with you and become happy to have a conversation.",
+      "H|The comment formula",
+      "Compliment the post → add something specific and smart from your own experience → end on a question to keep the conversation going. Never the lazy 'Love this 🔥'.",
+      "BAD|Love this! 🔥 Great post, totally agree.",
+      "GOOD|Great breakdown of SLA design. The piece most orgs miss is pausing the timer while you're waiting on the customer — we fixed that with entitlement business hours plus a milestone time trigger, and reopened breaches dropped a lot. Curious — are you handling weekend coverage with multiple calendars or one global one?",
     ] },
   { id: "d_craft", name: "Sharpen the Craft", icon: "book", xp: 30, rep: 1,
     desc: "25 minutes on a cert, Trailhead, or a skill that raises your rate.",
     how: [
-      "Protect this — but never let studying become a hiding place from outreach. Outreach first, craft second.",
-      "Bias toward skills that raise your rate or deepen your niche (Agentforce, advanced Flow, integration patterns).",
+      "Protect this time — but never let studying quietly become a hiding place from outreach. The order matters: outreach first, craft second. Refactoring and 'one more cert' are the classic ways preparation eats the day.",
+      "Bias toward skills that raise your rate or deepen your niche: Agentforce (early-mover advantage), advanced Flow, integration patterns, and anything that strengthens your Service Cloud story.",
     ] },
   { id: "d_fund", name: "Feed the Fund", icon: "piggy", xp: 20, rep: 0,
     desc: "Log any amount saved toward the building. Even PHP 100.", fund: true },
   { id: "d_proof", name: "Leave Proof", icon: "pen", xp: 20, rep: 1,
-    desc: "Write 1 sentence of what you learned or built today." },
+    desc: "Write 1 sentence of what you learned or built today.",
+    how: [
+      "One sentence is enough. The point is a daily internal feedback loop, so progress feels real instead of invisible.",
+      "EX|Today I rewrote my Upwork opener to lead with the client's SLA problem instead of my résumé.",
+    ] },
 ];
 
 const WEEKLY_QUESTS = [
   { id: "w_post", name: "Publish 1 Post", icon: "pen", xp: 90, rep: 4,
     desc: "Post once this week about a real Salesforce problem you solved.",
     how: [
-      "Add value publicly before you ask for anything privately. This is your runway — you build trust before the takeoff.",
-      "Best topics: a real thing you shipped (the SLA logic, the Maps integration, an RMA workflow) and the result it drove.",
-      "Keep it concrete. A specific problem → what you built → what changed. Specialists get remembered; generalists get scrolled past.",
+      "H|The principle",
+      "Add value publicly before you ask for anything privately. The post is your runway — it builds trust with people who'll never comment but quietly watch, so the relationship is already warm when you eventually reach out.",
+      "H|A structure you can reuse every week",
+      "1) The problem a support/service leader actually feels. 2) What you built. 3) The result it drove. 4) A takeaway or a question to invite replies.",
+      "EX|Most support teams think their SLAs are working — until escalations start slipping through. The usual culprit: the timer keeps running while you're waiting on the customer. I rebuilt one team's entitlements so the clock paused correctly on customer-wait, and reopened breaches dropped sharply. If your SLA timer doesn't pause when the ball is in the customer's court, that's the first place I'd look. How is your team handling it?",
+      "Concrete beats clever. One real thing you shipped → what changed. Specialists get remembered; generalists get scrolled past.",
     ] },
   { id: "w_top25", name: "Tend the Top 25", icon: "compass", xp: 60, rep: 3,
     desc: "Review your Top 25 list and interact with at least 5 of them this week.",
     how: [
-      "Keep a list of the 25 voices you want to be top-of-mind for: creators your clients follow, complementary freelancers, and dream clients.",
-      "Use LinkedIn's Follow feature (or Sales Navigator) so their posts surface. Be ever-present in their comments — little billboards for your business.",
-      "Refresh the list as you learn who actually engages back. This is your warm pipeline in slow motion.",
+      "H|Build the list",
+      "Make a list of the 25 people you most want to be top-of-mind for. Mix all three ladder tiers: creators your dream clients follow (Salesforce MVPs / Service Cloud voices), complementary freelancers and consultants, and actual dream clients (heads of support / service ops at target companies).",
+      "H|How to work it",
+      "Use LinkedIn's Follow feature — or Sales Navigator — so their posts reliably surface in your feed. Then be ever-present in their comments, leaving little billboards for your business in the form of genuinely valuable comments. Interact with at least 5 of the 25 each week.",
+      "Refresh the list as you learn who actually engages back. This is your warm pipeline in slow motion — the people you're building familiarity with before any sales conversation ever happens.",
     ] },
 ];
 
@@ -823,9 +847,7 @@ function Game({ session }) {
               </div>
               {dq.how && howOpen && (
                 <div style={S.howBox}>
-                  {dq.how.map((line, i) => (
-                    <div key={i} style={S.howLine}>{line}</div>
-                  ))}
+                  <HowContent lines={dq.how} />
                 </div>
               )}
             </div>
@@ -856,9 +878,7 @@ function Game({ session }) {
               </div>
               {wq.how && howOpen && (
                 <div style={S.howBox}>
-                  {wq.how.map((line, i) => (
-                    <div key={i} style={S.howLine}>{line}</div>
-                  ))}
+                  <HowContent lines={wq.how} />
                 </div>
               )}
             </div>
@@ -963,6 +983,41 @@ function Shell({ children }) {
 function Stat({ icon, label, val }) {
   return <div style={S.statCell}><div style={{ color: "#d4a24e", marginBottom: 4 }}>{icon}</div><div style={S.statVal}>{val}</div><div style={S.statLabel}>{label}</div></div>;
 }
+function HowContent({ lines }) {
+  return (
+    <>
+      {lines.map((line, i) => {
+        if (line.startsWith("GOOD|")) {
+          return (
+            <div key={i} style={S.howGood}>
+              <div style={S.howTagGood}>✓ COPY THIS</div>
+              <div style={S.howExampleText}>{line.slice(5)}</div>
+            </div>
+          );
+        }
+        if (line.startsWith("BAD|")) {
+          return (
+            <div key={i} style={S.howBad}>
+              <div style={S.howTagBad}>✕ AVOID</div>
+              <div style={S.howExampleText}>{line.slice(4)}</div>
+            </div>
+          );
+        }
+        if (line.startsWith("EX|")) {
+          return (
+            <div key={i} style={S.howExample}>
+              <div style={S.howExampleText}>{line.slice(3)}</div>
+            </div>
+          );
+        }
+        if (line.startsWith("H|")) {
+          return <div key={i} style={S.howHeading}>{line.slice(2)}</div>;
+        }
+        return <div key={i} style={S.howLine}>{line}</div>;
+      })}
+    </>
+  );
+}
 function SectionTitle({ icon, text, sub }) {
   return <div style={S.sectionTitle}><div style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={{ color: "#d4a24e" }}>{icon}</span><span style={S.sectionText}>{text}</span></div>{sub && <div style={S.sectionSub}>{sub}</div>}</div>;
 }
@@ -1051,7 +1106,14 @@ const S = {
   dailyRow: { display: "flex", alignItems: "center", gap: 12 },
   howBtn: { display: "inline-flex", alignItems: "center", gap: 4, marginTop: 8, background: "transparent", border: "none", color: gold, fontFamily: "Spectral, serif", fontSize: 11.5, cursor: "pointer", padding: 0, opacity: 0.85 },
   howBox: { marginTop: 10, paddingTop: 10, borderTop: "1px solid #2c2519" },
-  howLine: { fontSize: 11.5, color: "#bcb199", lineHeight: 1.55, marginBottom: 6 },
+  howLine: { fontSize: 12, color: "#c4b99f", lineHeight: 1.6, marginBottom: 8 },
+  howHeading: { fontFamily: "Cinzel, serif", fontSize: 11.5, color: gold, fontWeight: 600, letterSpacing: 0.4, textTransform: "uppercase", marginTop: 4, marginBottom: 7 },
+  howExample: { background: "#14110b", border: "1px solid #2c2519", borderLeft: `3px solid ${gold}`, borderRadius: 8, padding: "9px 11px", marginBottom: 8 },
+  howGood: { background: "#11140d", border: "1px solid #2e3a22", borderLeft: "3px solid #6f9a4a", borderRadius: 8, padding: "9px 11px", marginBottom: 8 },
+  howBad: { background: "#16100d", border: "1px solid #3d2620", borderLeft: "3px solid #a85a4a", borderRadius: 8, padding: "9px 11px", marginBottom: 8 },
+  howTagGood: { fontSize: 9, fontWeight: 700, letterSpacing: 0.8, color: "#8fb86a", marginBottom: 4 },
+  howTagBad: { fontSize: 9, fontWeight: 700, letterSpacing: 0.8, color: "#c87a6a", marginBottom: 4 },
+  howExampleText: { fontSize: 12, color: "#d6cbb2", lineHeight: 1.55, fontStyle: "italic" },
   briefing: { background: "#15110b", border: "1px solid #3a2f1a", borderRadius: 12, marginBottom: 16, overflow: "hidden" },
   briefingHead: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", cursor: "pointer" },
   briefingTitle: { fontFamily: "Cinzel, serif", fontSize: 13, color: gold, fontWeight: 700, letterSpacing: 0.5 },

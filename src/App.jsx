@@ -3,7 +3,8 @@ import { supabase } from "./supabaseClient";
 import {
   Lock, Check, Swords, Flame, Coins, Users, Star,
   ChevronDown, ChevronUp, Hammer, Target, BookOpen, PiggyBank,
-  PenLine, Trophy, MapPin, Briefcase, Crown, Building2, RotateCcw, LogOut, Cloud
+  PenLine, Trophy, MapPin, Briefcase, Crown, Building2, RotateCcw, LogOut, Cloud,
+  MessageCircle, ScrollText, Compass
 } from "lucide-react";
 
 /* ============================ GAME DATA ============================ */
@@ -393,14 +394,68 @@ const LEVELS = [
 ];
 
 const DAILY_QUESTS = [
-  { id: "d_outreach", name: "Outreach", icon: "target", xp: 50, rep: 2,
-    desc: "Send 1 proposal or 1 cold/warm message. Just one. This is the whole game.", flagship: true },
+  { id: "d_outreach", name: "Send Proposals", icon: "target", xp: 50, rep: 2,
+    desc: "Send up to 2 targeted Upwork proposals. On dry days, 1 close-enough Salesforce job counts.", flagship: true,
+    how: [
+      "Only spend Connects on a fit: niche match (Service Cloud / SLA / RMA / field service), payment-verified client, job posted in the last 24–48h, under ~20 proposals so far.",
+      "When true Service Cloud jobs are scarce, widen slightly: general Admin/Dev, Flow automation, case management, customer portals. Your Dyson / Mimecast experience still makes you credible.",
+      "Lead with their problem, not your résumé. One specific line proving you've solved this exact thing before beats five lines about you.",
+      "Expect ~1 reply per 10–15 proposals at the start. That's normal. The only goal right now is the FIRST reply.",
+    ] },
+  { id: "d_connect", name: "LinkedIn Connections", icon: "users", xp: 30, rep: 2,
+    desc: "Send 5 connection requests with a short personal note. Every day, no exceptions.",
+    how: [
+      "Target titles: VP / Head of Customer Success, Service Operations, Field Service, or Salesforce Admins at companies of 50–500 employees (big enough to run Salesforce, small enough to lack a full dev team).",
+      "NO pitch. Just plant the flag. Example: 'Hi [Name], I'm a Salesforce developer focused on Service Cloud and SLA workflows for post-sale ops teams — thought it'd be good to connect.'",
+      "This is your safety net on slow Upwork days. It costs nothing and builds the pipeline you'll actually need later.",
+    ] },
+  { id: "d_comment", name: "Comment Ladder", icon: "comment", xp: 40, rep: 3,
+    desc: "Leave 3 valuable comments — one per tier — on posts in your niche. Be the familiar face.",
+    how: [
+      "THE LADDER — hit one comment on each tier:",
+      "• Tier 1 — Creators your dream clients follow. Goal: borrow their trust and get seen by their audience.",
+      "• Tier 2 — Peers & complementary freelancers in your niche. Goal: build credibility by proximity.",
+      "• Tier 3 — Dream clients themselves. Goal: warm them up with zero pitching — just make them look good.",
+      "THE FORMULA: compliment the post → add something specific/smart → end on a question to keep the conversation going. Never 'Love this! 🔥'.",
+      "WHY IT WORKS: every valuable comment is a tiny billboard. When the same people keep seeing your name next to something sharp, they start filing you as a trusted voice — before you ever pitch.",
+    ] },
   { id: "d_craft", name: "Sharpen the Craft", icon: "book", xp: 30, rep: 1,
-    desc: "25 minutes on a cert, Trailhead, or a skill that raises your rate." },
+    desc: "25 minutes on a cert, Trailhead, or a skill that raises your rate.",
+    how: [
+      "Protect this — but never let studying become a hiding place from outreach. Outreach first, craft second.",
+      "Bias toward skills that raise your rate or deepen your niche (Agentforce, advanced Flow, integration patterns).",
+    ] },
   { id: "d_fund", name: "Feed the Fund", icon: "piggy", xp: 20, rep: 0,
     desc: "Log any amount saved toward the building. Even PHP 100.", fund: true },
   { id: "d_proof", name: "Leave Proof", icon: "pen", xp: 20, rep: 1,
     desc: "Write 1 sentence of what you learned or built today." },
+];
+
+const WEEKLY_QUESTS = [
+  { id: "w_post", name: "Publish 1 Post", icon: "pen", xp: 90, rep: 4,
+    desc: "Post once this week about a real Salesforce problem you solved.",
+    how: [
+      "Add value publicly before you ask for anything privately. This is your runway — you build trust before the takeoff.",
+      "Best topics: a real thing you shipped (the SLA logic, the Maps integration, an RMA workflow) and the result it drove.",
+      "Keep it concrete. A specific problem → what you built → what changed. Specialists get remembered; generalists get scrolled past.",
+    ] },
+  { id: "w_top25", name: "Tend the Top 25", icon: "compass", xp: 60, rep: 3,
+    desc: "Review your Top 25 list and interact with at least 5 of them this week.",
+    how: [
+      "Keep a list of the 25 voices you want to be top-of-mind for: creators your clients follow, complementary freelancers, and dream clients.",
+      "Use LinkedIn's Follow feature (or Sales Navigator) so their posts surface. Be ever-present in their comments — little billboards for your business.",
+      "Refresh the list as you learn who actually engages back. This is your warm pipeline in slow motion.",
+    ] },
+];
+
+/* The playbook the user reads BEFORE working — distilled from the freelancer growth transcripts. */
+const MISSION_BRIEFING = [
+  { h: "The one rule", t: "Add value publicly before you ask for anything privately. Consistency of presence beats quality of pitch. Show up daily BEFORE you have something to sell, so the relationship is already warm when the moment comes." },
+  { h: "The Comment Ladder", t: "Tier 1 — creators your dream clients follow (borrow trust). Tier 2 — peers & complementary freelancers (credibility by proximity). Tier 3 — dream clients themselves (warm them up, never pitch). Hit one per tier each day." },
+  { h: "How to comment", t: "Compliment the post → add something specific and smart → end on a question. Never 'Love this 🔥'. Every good comment is a billboard with your name on it." },
+  { h: "Connection notes", t: "No cold pitch — ever. Short personal note, centered on them. You're just planting the flag so they recognise you later." },
+  { h: "The bridge to sales", t: "When a chat gets warm, don't 'switch' to selling — bridge: 'Not sure if this is on your radar right now, but if you're trying to solve [their thing], I'm happy to share a few frameworks that might help. Just say the word.' Direct, not pushy, centered on their problem." },
+  { h: "Build the runway", t: "Keep a CRM of 25 dream clients. Interact weekly. You build the trust before the takeoff." },
 ];
 
 const defaultState = {
@@ -412,9 +467,19 @@ const defaultState = {
   storyDone: {},
   bossDone: {},
   daily: { date: null, done: {}, fundToday: 0 },
+  weekly: { week: null, done: {} },
 };
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
+const weekStr = () => {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  // ISO week: Thursday-anchored
+  d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
+  const week1 = new Date(d.getFullYear(), 0, 4);
+  const wk = 1 + Math.round(((d - week1) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
+  return d.getFullYear() + "-W" + String(wk).padStart(2, "0");
+};
 const peso = (n) => "PHP " + Number(n || 0).toLocaleString("en-PH");
 const BUILDING_GOAL = 6000000;
 
@@ -511,6 +576,8 @@ function Game({ session }) {
   const [state, setState] = useState(defaultState);
   const [loaded, setLoaded] = useState(false);
   const [openQuest, setOpenQuest] = useState(null);
+  const [openHow, setOpenHow] = useState(null);
+  const [briefingOpen, setBriefingOpen] = useState(false);
   const [drafts, setDrafts] = useState({});
   const [fundInput, setFundInput] = useState("");
   const [showMap, setShowMap] = useState(false);
@@ -539,6 +606,15 @@ function Game({ session }) {
       setState((s) => ({ ...s, daily: { date: t, done: {}, fundToday: 0 } }));
     }
   }, [loaded, state.daily.date]);
+
+  /* ---- weekly reset ---- */
+  useEffect(() => {
+    if (!loaded) return;
+    const w = weekStr();
+    if (!state.weekly || state.weekly.week !== w) {
+      setState((s) => ({ ...s, weekly: { week: w, done: {} } }));
+    }
+  }, [loaded, state.weekly?.week]);
 
   /* ---- debounced cloud save ---- */
   const persist = useCallback((next) => {
@@ -616,6 +692,24 @@ function Game({ session }) {
     fireFlash(`+${dq.xp} XP — ${dq.name}`);
   };
 
+  const doWeekly = (wq) => {
+    if (state.weekly?.done?.[wq.id]) return;
+    const t = todayStr();
+    const w = weekStr();
+    update((s) => {
+      const wasNewDay = s.lastActiveDate !== t;
+      return {
+        ...s,
+        lifetimeXP: s.lifetimeXP + wq.xp,
+        streak: wasNewDay ? s.streak + 1 : s.streak,
+        lastActiveDate: t,
+        stats: { ...s.stats, reputation: s.stats.reputation + (wq.rep || 0) },
+        weekly: { week: w, done: { ...(s.weekly?.done || {}), [wq.id]: true } },
+      };
+    });
+    fireFlash(`+${wq.xp} XP — ${wq.name}`);
+  };
+
   const resetGame = () => {
     if (!window.confirm("Reset all progress? This cannot be undone.")) return;
     update(() => ({ ...defaultState }));
@@ -678,23 +772,95 @@ function Game({ session }) {
           </div>
         </div>
 
+        {/* mission briefing */}
+        <div style={S.briefing}>
+          <div style={S.briefingHead} onClick={() => setBriefingOpen((o) => !o)}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <ScrollText size={16} color={gold} />
+              <span style={S.briefingTitle}>MISSION BRIEFING</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={S.briefingHint}>read before you work</span>
+              {briefingOpen ? <ChevronUp size={16} color={muted} /> : <ChevronDown size={16} color={muted} />}
+            </div>
+          </div>
+          {briefingOpen && (
+            <div style={S.briefingBody}>
+              {MISSION_BRIEFING.map((b, i) => (
+                <div key={i} style={{ marginBottom: i === MISSION_BRIEFING.length - 1 ? 0 : 12 }}>
+                  <div style={S.briefingH}>{b.h}</div>
+                  <div style={S.briefingT}>{b.t}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* daily */}
         <SectionTitle icon={<Flame size={16} />} text="DAILY QUESTS" sub="Reset every day · keep the streak alive" />
         {DAILY_QUESTS.map((dq) => {
           const done = !!state.daily.done[dq.id];
+          const howOpen = openHow === dq.id;
           return (
             <div key={dq.id} style={{ ...S.dailyCard, ...(done ? S.dailyDone : {}), ...(dq.flagship ? S.flagship : {}) }}>
-              <div style={S.dailyIcon}>{iconFor(dq.icon)}</div>
-              <div style={{ flex: 1 }}>
-                <div style={S.dailyName}>{dq.name}{dq.flagship && <span style={S.flagBadge}>MOST IMPORTANT</span>}</div>
-                <div style={S.dailyDesc}>{dq.desc}</div>
-                {dq.fund && !done && (
-                  <input value={fundInput} onChange={(e) => setFundInput(e.target.value)} placeholder="PHP amount saved today" style={S.fundInput} inputMode="numeric" />
-                )}
+              <div style={S.dailyRow}>
+                <div style={S.dailyIcon}>{iconFor(dq.icon)}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={S.dailyName}>{dq.name}{dq.flagship && <span style={S.flagBadge}>MOST IMPORTANT</span>}</div>
+                  <div style={S.dailyDesc}>{dq.desc}</div>
+                  {dq.fund && !done && (
+                    <input value={fundInput} onChange={(e) => setFundInput(e.target.value)} placeholder="PHP amount saved today" style={S.fundInput} inputMode="numeric" />
+                  )}
+                  {dq.how && (
+                    <button style={S.howBtn} onClick={() => setOpenHow(howOpen ? null : dq.id)}>
+                      {howOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />} How to do this
+                    </button>
+                  )}
+                </div>
+                <button onClick={() => doDaily(dq)} disabled={done} style={{ ...S.checkBtn, ...(done ? S.checkBtnDone : {}) }}>
+                  {done ? <Check size={16} /> : `+${dq.xp}`}
+                </button>
               </div>
-              <button onClick={() => doDaily(dq)} disabled={done} style={{ ...S.checkBtn, ...(done ? S.checkBtnDone : {}) }}>
-                {done ? <Check size={16} /> : `+${dq.xp}`}
-              </button>
+              {dq.how && howOpen && (
+                <div style={S.howBox}>
+                  {dq.how.map((line, i) => (
+                    <div key={i} style={S.howLine}>{line}</div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {/* weekly */}
+        <SectionTitle icon={<Compass size={16} />} text="WEEKLY QUESTS" sub="Reset every week · the long game" />
+        {WEEKLY_QUESTS.map((wq) => {
+          const done = !!state.weekly?.done?.[wq.id];
+          const howOpen = openHow === wq.id;
+          return (
+            <div key={wq.id} style={{ ...S.dailyCard, ...(done ? S.dailyDone : {}) }}>
+              <div style={S.dailyRow}>
+                <div style={S.dailyIcon}>{iconFor(wq.icon)}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={S.dailyName}>{wq.name}</div>
+                  <div style={S.dailyDesc}>{wq.desc}</div>
+                  {wq.how && (
+                    <button style={S.howBtn} onClick={() => setOpenHow(howOpen ? null : wq.id)}>
+                      {howOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />} How to do this
+                    </button>
+                  )}
+                </div>
+                <button onClick={() => doWeekly(wq)} disabled={done} style={{ ...S.checkBtn, ...(done ? S.checkBtnDone : {}) }}>
+                  {done ? <Check size={16} /> : `+${wq.xp}`}
+                </button>
+              </div>
+              {wq.how && howOpen && (
+                <div style={S.howBox}>
+                  {wq.how.map((line, i) => (
+                    <div key={i} style={S.howLine}>{line}</div>
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}
@@ -809,6 +975,9 @@ function iconFor(name) {
   if (name === "book") return <BookOpen size={18} color={c} />;
   if (name === "piggy") return <PiggyBank size={18} color={c} />;
   if (name === "pen") return <PenLine size={18} color={c} />;
+  if (name === "users") return <Users size={18} color={c} />;
+  if (name === "comment") return <MessageCircle size={18} color={c} />;
+  if (name === "compass") return <Compass size={18} color={c} />;
   return <Hammer size={18} color={c} />;
 }
 function FontInjector() {
@@ -878,7 +1047,18 @@ const S = {
   sectionText: { fontFamily: "Cinzel, serif", fontSize: 14, color: ink, letterSpacing: 1, fontWeight: 600 },
   sectionSub: { fontSize: 11.5, color: muted, marginTop: 3, marginLeft: 24 },
 
-  dailyCard: { display: "flex", alignItems: "center", gap: 12, background: card, border: "1px solid #2c2519", borderRadius: 12, padding: 12, marginBottom: 10 },
+  dailyCard: { display: "flex", flexDirection: "column", background: card, border: "1px solid #2c2519", borderRadius: 12, padding: 12, marginBottom: 10 },
+  dailyRow: { display: "flex", alignItems: "center", gap: 12 },
+  howBtn: { display: "inline-flex", alignItems: "center", gap: 4, marginTop: 8, background: "transparent", border: "none", color: gold, fontFamily: "Spectral, serif", fontSize: 11.5, cursor: "pointer", padding: 0, opacity: 0.85 },
+  howBox: { marginTop: 10, paddingTop: 10, borderTop: "1px solid #2c2519" },
+  howLine: { fontSize: 11.5, color: "#bcb199", lineHeight: 1.55, marginBottom: 6 },
+  briefing: { background: "#15110b", border: "1px solid #3a2f1a", borderRadius: 12, marginBottom: 16, overflow: "hidden" },
+  briefingHead: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", cursor: "pointer" },
+  briefingTitle: { fontFamily: "Cinzel, serif", fontSize: 13, color: gold, fontWeight: 700, letterSpacing: 0.5 },
+  briefingHint: { fontSize: 10.5, color: muted, fontStyle: "italic" },
+  briefingBody: { padding: "0 14px 14px" },
+  briefingH: { fontFamily: "Cinzel, serif", fontSize: 12, color: ink, fontWeight: 600, marginBottom: 3 },
+  briefingT: { fontSize: 12, color: "#bcb199", lineHeight: 1.55 },
   flagship: { borderColor: "#4a3c1f", background: "#1d180f" },
   dailyDone: { opacity: 0.55 },
   dailyIcon: { width: 40, height: 40, borderRadius: 10, background: "#15110b", border: "1px solid #2c2519", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },

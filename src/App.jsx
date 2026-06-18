@@ -4,7 +4,7 @@ import {
   Lock, Check, Swords, Flame, Coins, Users, Star,
   ChevronDown, ChevronUp, Hammer, Target, BookOpen, PiggyBank,
   PenLine, Trophy, MapPin, Briefcase, Crown, Building2, RotateCcw, LogOut, Cloud,
-  MessageCircle, ScrollText, Compass
+  MessageCircle, ScrollText, Compass, Radar
 } from "lucide-react";
 
 /* ============================ GAME DATA ============================ */
@@ -410,22 +410,23 @@ const DAILY_QUESTS = [
   { id: "d_connect", name: "LinkedIn Connections", icon: "users", xp: 30, rep: 2,
     desc: "Send 5 connection requests with a short personal note. Every day, no exceptions.",
     how: [
-      "H|Qualify before you connect",
-      "Don't spend a connection on a random person. Every one of today's 5 must clear one of the same three tiers as your Comment Ladder quest. If someone doesn't fit any tier, skip them and find one who does — five qualified beats five random, every time.",
-      "H|Tier 1 — Creators your dream clients follow",
-      "Qualifying test: do they post about Salesforce / Service Cloud and have real reach with the people you want as clients (Salesforce MVPs, Service Cloud thought leaders)? If yes, connecting borrows their trust.",
-      "GOOD|Hi [Name] — really value your posts on Service Cloud design, especially the SLA/entitlement threads. Always good to connect with people writing about this stuff.",
-      "H|Tier 2 — Peers & complementary freelancers",
-      "Qualifying test: are they another Salesforce consultant, admin, or integration dev you could trade referrals or visibility with? If yes, connecting builds credibility by proximity.",
-      "GOOD|Hi [Name] — saw your work on [their post/project], looks like we play in the same space (Service Cloud / integrations). Always glad to connect with fellow Salesforce folks.",
-      "H|Tier 3 — Dream clients themselves",
-      "Qualifying test: are they a VP / Head / Director of Customer Success, Service Operations, Field Service, or Support — or a Salesforce Admin — at a company with 50–500 employees? That size is the sweet spot: big enough to run Salesforce seriously, small enough to lack a full in-house dev bench.",
-      "GOOD|Hi [Name] — I work with post-sale support teams on Salesforce Service Cloud (SLAs, entitlements, returns). Always glad to connect with people leading service ops.",
+      "H|The 3 tiers aren't the same thing",
+      "Before you connect, know which tier someone is in — because each tier pays you back differently. Tier 3 is your actual pipeline (people who can buy). Tier 1 and Tier 2 are leverage — they put you in front of Tier 3. Weight your 5 toward Tier 3, a couple toward Tier 1/2. Never a random add.",
+      "H|Tier 3 — Direct prospects (your real pipeline)",
+      "The master filter, both must be true: are they on Salesforce Service Cloud, AND do they have contractual SLAs that cost them money when missed? If not, custom SLA work is a non-starter for them — skip. Best-fit anchor: field service & equipment maintenance (HVAC, medical devices, elevators, fire/security) — the same buyer who later needs your scheduling and RMA work too. Also strong: MSPs, B2B SaaS with tiered support, telecom, logistics, healthcare, facilities.",
+      "Score them on 5 points — (1) on Service Cloud, (2) SLA-heavy industry, (3) has contractual service commitments, (4) decision-maker or close to one (Head/Director/Mgr of Service, Ops, or Support — or owner at a smaller company), (5) active on LinkedIn. Hits 4–5 → connect and track them. Hits 2 or fewer → skip. Don't even spend a comment on them.",
+      "GOOD|Hi [Name] — I work with field service teams on the Salesforce side of their SLAs (entitlements, response-time tracking, escalations). Always glad to connect with people running service ops.",
       "GOOD|Hi [Name] — noticed [Company] is scaling its support org. I build the Service Cloud side of that — SLA tracking, case automation, returns workflows. Thought it'd be good to be connected.",
+      "H|Tier 1 — Influential voices (leverage, NOT pipeline)",
+      "These people never buy — their value is that their audience (your Tier 3 buyers) sees you in their comments. You only need 5–8 good ones. The real test: read their comment section. Full of actual service-business people? Gold. All other consultants? Skip. Aim for mid-sized niche voices — on a mega-account your comment just vanishes.",
+      "GOOD|Hi [Name] — really value your posts on Service Cloud design, especially the SLA/entitlement threads. Looking forward to following along.",
+      "H|Tier 2 — Connectors (leverage, NOT pipeline)",
+      "People who can refer or subcontract to you: Salesforce consultants/agencies who serve your buyer but don't do exactly what you do, fractional ops people, etc. Qualify by — do they serve the same buyer, is what they offer complementary (not competing), and are they reachable?",
+      "GOOD|Hi [Name] — looks like we serve the same kind of service teams from different angles (you on [their thing], me on the Service Cloud SLA side). Always good to know people I can trade referrals with.",
       "H|The rule: don't pitch, just connect",
-      "Your job here is to start a relationship, not make a sale. Connect, and where you naturally can, share something useful. Add value publicly before you ever ask for anything privately — this is your runway, and you build the trust before the takeoff. A connection note is just you planting the flag so they recognise your name later.",
+      "Your job here is to start a relationship, not make a sale. Add value publicly before you ever ask for anything privately — this is your runway, and you build the trust before the takeoff. A connection note just plants the flag so they recognise your name later.",
       "BAD|Hi, I'm a Salesforce developer looking for clients. Do you need any Salesforce work done? I can offer good rates.",
-      "Five a day, every day, no exceptions — but five that clear a tier, never five random adds. This is your safety net when Upwork is dry — it costs nothing and quietly builds the pipeline you'll need anyway.",
+      "Five a day, every day — but five that clear a tier, weighted toward Tier 3. Never five random adds.",
     ] },
   { id: "d_comment", name: "Comment Ladder", icon: "comment", xp: 40, rep: 3,
     desc: "Leave 3 valuable comments — one per tier — on posts in your niche. Be the familiar face.",
@@ -440,6 +441,26 @@ const DAILY_QUESTS = [
       "Compliment the post → add something specific and smart from your own experience → end on a question to keep the conversation going. Never the lazy 'Love this 🔥'.",
       "BAD|Love this! 🔥 Great post, totally agree.",
       "GOOD|Great breakdown of SLA design. The piece most orgs miss is pausing the timer while you're waiting on the customer — we fixed that with entitlement business hours plus a milestone time trigger, and reopened breaches dropped a lot. Curious — are you handling weekend coverage with multiple calendars or one global one?",
+    ] },
+  { id: "d_signal", name: "Signal Outreach", icon: "radar", xp: 40, rep: 3,
+    desc: "Find 1–3 people who gave a reason to be contacted TODAY, and send each one short, specific message.",
+    how: [
+      "H|Stop messaging at random",
+      "Every day a few of your Tier 3 prospects do something that makes today the right day to reach them. You're not blasting a campaign — you're finding the 1–3 people who just gave you an opening and sending each one a single, specific note. Precision, not volume.",
+      "H|The 4 signals — watch for these (strongest first)",
+      "1. They posted a problem — a service headache in their own words (missed appointments, lost returns, slow support, messy scheduling). STRONGEST signal: they named the pain themselves.",
+      "2. They engaged with relevant content — liked or commented on a post about Salesforce, Service Cloud, field service, RMA/returns, or scheduling. They're already thinking about what you fix.",
+      "3. They're hiring — posted a job for service, dispatch, support, or ops staff. Growing team = messier process = your work becomes relevant.",
+      "4. New job — a prospect started a new role or company. New role = new problems, new budget, more open to talking.",
+      "H|Where to find them (15 min, inside your normal LinkedIn time)",
+      "Scan your feed, then check the activity and comment sections of your Tier 1 voices and Tier 2 connectors — they're full of Tier 3 prospects reacting to exactly your topics. Pick just 1–3 who hit a signal today. Zero-signal day? Fine — fall back to connections + comments, don't force it.",
+      "H|The message formula — under 5 lines",
+      "Line 1 names the signal (prove you noticed the specific thing). Then one sentence connecting it to what you do — not a pitch. Then one low-friction question. Never 'book a 30-min call' in the first message.",
+      "GOOD|Saw your post about returns getting lost between the warehouse and support — that gap is usually a Service Cloud workflow problem, and it's fixable. Out of curiosity, is it costing you more in refunds or in staff time right now?",
+      "GOOD|Saw you just joined [Company] as Head of Service — congrats. I build the Service Cloud side of support orgs (SLAs, entitlements, returns). No pitch — just curious what the first thing you're hoping to fix there is.",
+      "BAD|Hi! I'm a Salesforce developer with experience across many projects. I'd love to set up a 30-minute call to show how I can help your business. When are you free this week?",
+      "H|The only scoreboard",
+      "Did you send your 1–3 signal messages today? That's the number that matters — not likes, not replies. One message per signal, no follow-up sequence. Prep for 2 minutes, then send — the signal window is short.",
     ] },
   { id: "d_craft", name: "Sharpen the Craft", icon: "book", xp: 30, rep: 1,
     desc: "25 minutes on a cert, Trailhead, or a skill that raises your rate.",
@@ -1040,6 +1061,7 @@ function iconFor(name) {
   if (name === "users") return <Users size={18} color={c} />;
   if (name === "comment") return <MessageCircle size={18} color={c} />;
   if (name === "compass") return <Compass size={18} color={c} />;
+  if (name === "radar") return <Radar size={18} color={c} />;
   return <Hammer size={18} color={c} />;
 }
 function FontInjector() {
